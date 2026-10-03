@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แผนฝึกจริง — วรายุทธ์ ❤️ ศุภลักษณ์</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 650px; margin: 0 auto; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .auth-card {
+            background: #1e293b; border-radius: 16px; padding: 30px 25px; margin-top: 60px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 1px solid #334155;
+        }
+        .auth-card h1 { text-align: center; margin-bottom: 5px; font-size: 1.4rem; }
+        .auth-card .subtitle { text-align: center; color: #94a3b8; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: #cbd5e1; }
+        input {
+            width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #475569;
+            background: #0f172a; color: #fff; font-size: 1rem;
+        }
+        input:focus { outline: none; border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244,114,182,0.2); }
+        button {
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary { background: linear-gradient(90deg, #f472b6, #4ade80); color: #0f172a; }
+        .btn-primary:hover { transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid #64748b; color: #cbd5e1; margin-top: 10px; }
+        .error-box {
+            background: rgba(239,68,68,0.1); border: 1px solid #ef4444;
+            border-radius: 8px; padding: 12px; margin-top: 15px; color: #fca5a5;
+            text-align: center; font-weight: bold; display: none;
+        }
+        .header-card {
+            background: linear-gradient(135deg, #b45309, #92400e, #78350f);
+            border-radius: 16px; padding: 20px; margin-bottom: 15px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .header-card .name { font-size: 1.1rem; font-weight: bold; color: #fef3c7; margin-bottom: 5px; }
+        .header-card .partner { color: #fbcfe8; font-size: 0.9rem; margin-bottom: 8px; }
+        .user-badge {
+            display: inline-block; padding: 5px 12px; border-radius: 20px;
+            font-size: 0.85rem; font-weight: bold; margin-top: 5px;
+        }
+        .badge-v { background: #4ade80; color: #0f172a; }
+        .badge-s { background: #f472b6; color: #1e293b; }
+        .progress-box {
+            background: #334155; border-radius: 12px; padding: 15px; margin-bottom: 15px;
+        }
+        .progress-top { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .progress-bar { height: 12px; background: #475569; border-radius: 6px; overflow: hidden; }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #f472b6, #4ade80);
+            width: 0%; border-radius: 6px; transition: width 0.3s ease;
+        }
+        .edit-bar {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .edit-btn {
+            width: auto; padding: 8px 16px; background: #facc15; color: #1f2937;
+            font-size: 0.9rem; border-radius: 8px;
+        }
+        .edit-btn.active { background: #4ade80; }
+        .logout-btn {
+            width: auto; padding: 8px 14px; background: transparent;
+            border: 1px solid #64748b; color: #cbd5e1; font-size: 0.85rem;
+        }
+        .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+        .tab {
+            padding: 8px 12px; background: #334155; border-radius: 8px;
+            cursor: pointer; font-size: 0.85rem;
+        }
+        .tab.active {
+            background: linear-gradient(90deg, #f472b6, #4ade80);
+            color: #0f172a; font-weight: bold;
+        }
+        .day-content { display: none; }
+        .day-content.active { display: block; }
+        .card {
+            background: #1e293b; border-radius: 14px; padding: 18px;
+            margin-bottom: 14px; border: 1px solid #334155;
+        }
+        .card h2 { font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .green { color: #4ade80; }
+        .yellow { color: #facc15; }
+        .blue { color: #60a5fa; }
+        .red { color: #f87171; }
+        .orange { color: #fb923c; }
+        .pink { color: #f472b6; }
+        .check-item {
+            display: flex; align-items: flex-start; padding: 10px 0;
+            border-bottom: 1px solid #334155;
+        }
+        .check-item:last-child { border-bottom: none; }
+        .check-item input {
+            width: 22px; height: 22px; margin-right: 12px; margin-top: 2px;
+            accent-color: #4ade80; cursor: pointer;
+        }
+        .check-text { line-height: 1.5; }
+        .check-text.done { text-decoration: line-through; color: #64748b; }
+        .check-meta { font-size: 0.75rem; color: #94a3b8; margin-top: 3px; }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+            z-index: 100;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #1e293b; border-radius: 16px; padding: 25px;
+            max-width: 400px; width: 100%; border: 1px solid #475569;
+        }
+        .modal-box h3 { margin-bottom: 15px; text-align: center; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-buttons button { flex: 1; }
+        .contact-urgent {
+            color: #f87171; font-weight: bold; text-align: center;
+            margin-top: 12px; display: none;
+        }
+        .sync-status {
+            font-size: 0.75rem; color: #94a3b8; text-align: right; margin-bottom: 10px;
+        }
+        .note-box {
+            background: rgba(244,114,182,0.1); border: 1px solid #f472b6;
+            border-radius: 8px; padding: 10px; margin-bottom: 15px; font-size: 0.85rem;
+            color: #fbcfe8; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyCD8zDmCPV0VW93C3kGooVTEk1AYd5ueP0",
+          authDomain: "plan-exercise-1758a.firebaseapp.com",
+          databaseURL: "https://plan-exercise-1758a-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "plan-exercise-1758a",
+          storageBucket: "plan-exercise-1758a.firebasestorage.app",
+          messagingSenderId: "353162720368",
+          appId: "1:353162720368:web:4b1b4a03a310e43395b0b5",
+          measurementId: "G-TQK0L7H6Y9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const dataRef = db.ref('plan-data');
+        </script>
+
+        <div id="screen-login" class="screen active">
+            <div class="auth-card">
+                <h1>🔥 แผนฝึกเพื่อความฝัน</h1>
+                <p class="subtitle">ว่าที่นักเรียนนายสิบ วรายุทธ์ ❤️ ศุภลักษณ์</p>
+                
+                <div class="form-group">
+                    <label>ใส่ชื่อ</label>
+                    <input type="text" id="login-user" placeholder="">
+                </div>
+                <div class="form-group">
+                    <label>ใส่รหัส</label>
+                    <input type="password" id="login-pass" placeholder="">
+                </div>
+                <button class="btn-primary" onclick="doLogin()">เข้าสู่ระบบ</button>
+                
+                <div class="error-box" id="login-error">
+                    ❌ ชื่อหรือรหัสผ่านไม่ถูกต้อง<br>กรุณาตรวจสอบอีกครั้ง
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-dashboard" class="screen">
+            <div class="note-box">
+                🔄 อัปเดตทันที — ติกที่นี่ อีกฝ่ายเห็นทันที!
+            </div>
+            
+            <div class="header-card">
+                <div class="name">ว่าที่นักเรียนนายสิบ วรายุทธ์ อ่อนขาว</div>
+                <div class="partner">คอยดูแลและเป็นกำลังใจโดย ❤️ ศุภลักษณ์</div>
+                <div id="current-user-badge" class="user-badge">—</div>
+            </div>
+
+            <div class="edit-bar">
+                <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
+                <button class="edit-btn" id="enter-edit-btn" onclick="toggleEditMode()">✏️ แก้ไขข้อมูล</button>
+            </div>
+
+            <div class="sync-status" id="sync-indicator">✅ พร้อมใช้งาน</div>
+
+            <div class="progress-box">
+                <div class="progress-top">
+                    <strong>ความคืบหน้าเดือนตุลาคม 2569</strong>
+                    <span id="progressText">0 / 0</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="tabs" id="dayTabs"></div>
+            <div id="dayContents"></div>
+        </div>
+
+        <div class="modal-overlay" id="edit-modal">
+            <div class="modal-box">
+                <h3>🔐 ยืนยันรหัสผ่าน</h3>
+                <p style="color:#94a3b8; margin-bottom:12px; font-size:0.9rem;">ใส่รหัสอีกครั้งเพื่อแก้ไขข้อมูล</p>
+                <div class="form-group">
+                    <input type="password" id="edit-pass" placeholder="">
+                </div>
+                <div class="contact-urgent" id="wrong-pass-msg">
+                    ⚠️ รหัสไม่ถูกต้อง!<br>ติดต่อน้ำพุด่วนนนน!!!
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-secondary" onclick="closeEditModal()">ยกเลิก</button>
+                    <button class="btn-primary" onclick="confirmEditPass()">ยืนยัน</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const VALID_PASS = '472551';
+        const USERS = {
+            'วรายุทธ์': { id: 'warayut', name: 'วรายุทธ์', badge: 'badge-v' },
+            'ศุภลักษณ์': { id: 'supaluk', name: 'ศุภลักษณ์', badge: 'badge-s' }
+        };
+
+        let currentUser = null;
+        let editMode = false;
+        let activeDay = null;
+        let localData = {};
+
+        const dayData = [
+            { date: '2026-10-03', label: '3 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'rest' },
+            { date: '2026-10-04', label: '4 ต.ค.', rest: true },
+            { date: '2026-10-05', label: '5 ต.ค.', rest: false, pull:3, push:2, back:2, legs:'rest' },
+            { date: '2026-10-06', label: '6 ต.ค.', rest: false, pull:3, push:2, back:2, legs:'light' },
+            { date: '2026-10-07', label: '7 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'light' },
+            { date: '2026-10-08', label: '8 ต.ค.', rest: true },
+            { date: '2026-10-09', label: '9 ต.ค.', rest: false, pull:4, push:3, back:3, legs:'full' },
+            { date: '2026-10-10', label: '10 ต.ค.', rest: true },
+            { date: '2026-10-11', label: '11 ต.ค.', rest: true },
+            { date: '2026-10-12', label: '12 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'light' },
+            { date: '2026-10-13', label: '13 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'full' },
+            { date: '2026-10-14', label: '14 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'light' },
+            { date: '2026-10-15', label: '15 ต.ค.', rest: true },
+            { date: '2026-10-16', label: '16 ต.ค.', rest: false, pull:5, push:3, back:3, legs:'full' },
+            { date: '2026-10-17', label: '17 ต.ค.', rest: true },
+            { date: '2026-10-18', label: '18 ต.ค.', rest: true },
+            { date: '2026-10-19', label: '19 ต.ค.', rest: false, pull:5, push:3, back:3, legs:'light' },
+            { date: '2026-10-20', label: '20 ต.ค.', rest: false, pull:3, push:3, back:3, legs:'full' },
+            { date: '2026-10-21', label: '21 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'light' },
+            { date: '2026-10-22', label: '22 ต.ค.', rest: true },
+            { date: '2026-10-23', label: '23 ต.ค.', rest: false, pull:5, push:3, back:3, legs:'full' },
+            { date: '2026-10-24', label: '24 ต.ค.', rest: true },
+            { date: '2026-10-25', label: '25 ต.ค.', rest: true },
+            { date: '2026-10-26', label: '26 ต.ค.', rest: false, pull:4, push:3, back:3, legs:'full' },
+            { date: '2026-10-27', label: '27 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'light' },
+            { date: '2026-10-28', label: '28 ต.ค.', rest: false, pull:4, push:3, back:2, legs:'rest' },
+            { date: '2026-10-29', label: '29 ต.ค.', rest: true },
+            { date: '2026-10-30', label: '30 ต.ค.', rest: false, pull:4, push:3, back:3, legs:'full' },
+            { date: '2026-10-31', label: '31 ต.ค.', rest: true },
+        ];
+
+        function doLogin() {
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value.trim();
+            if (USERS[u] && p === VALID_PASS) {
+                currentUser = USERS[u];
+                localStorage.setItem('active_user', JSON.stringify(currentUser));
+                showScreen('dashboard');
+                initDashboard();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function doLogout() {
+            localStorage.removeItem('active_user');
+            currentUser = null;
+            editMode = false;
+            showScreen('login');
+            document.getElementById('login-user').value = '';
+            document.getElementById('login-pass').value = '';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        function showScreen(name) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${name}`).classList.add('active');
+        }
+
+        function checkAutoLogin() {
+            const saved = localStorage.getItem('active_user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                showScreen('dashboard');
+                initDashboard();
+            }
+        }
+
+        function toggleEditMode() {
+            if (editMode) {
+                editMode = false;
+                document.getElementById('enter-edit-btn').textContent = '✏️ แก้ไขข้อมูล';
+                document.getElementById('enter-edit-btn').classList.remove('active');
+                enableCheckboxes(false);
+            } else {
+                document.getElementById('edit-pass').value = '';
+                document.getElementById('wrong-pass-msg').style.display = 'none';
+                document.getElementById('edit-modal').classList.add('active');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+        }
+
+        function confirmEditPass() {
+            const p = document.getElementById('edit-pass').value.trim();
+            if (p === VALID_PASS) {
+                editMode = true;
+                closeEditModal();
+                document.getElementById('enter-edit-btn').textContent = '✅ กำลังแก้ไข...';
+                document.getElementById('enter-edit-btn').classList.add('active');
+                enableCheckboxes(true);
+            } else {
+                document.getElementById('wrong-pass-msg').style.display = 'block';
+            }
+        }
+
+        function enableCheckboxes(flag) {
+            document.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
+                cb.disabled = !flag;
+            });
+        }
+
+        function initDashboard() {
+            document.getElementById('current-user-badge').textContent = currentUser.name;
+            document.getElementById('current-user-badge').className = `user-badge ${currentUser.badge}`;
+            editMode = false;
+            document.getElementById('enter-edit-btn').textContent = '✏️ แก้ไขข้อมูล';
+            document.getElementById('enter-edit-btn').classList.remove('active');
+            enableCheckboxes(false);
+
+            const tabsContainer = document.getElementById('dayTabs');
+            const contentsContainer = document.getElementById('dayContents');
+            tabsContainer.innerHTML = '';
+            contentsContainer.innerHTML = '';
+            activeDay = dayData[0].date;
+
+            dayData.forEach(day => {
+                const tab = document.createElement('div');
+                tab.className = `tab ${day.date === activeDay ? 'active' : ''}`;
+                tab.textContent = day.label;
+                tab.onclick = () => switchDay(day.date);
+                tabsContainer.appendChild(tab);
+
+                const div = document.createElement('div');
+                div.className = `day-content ${day.date === activeDay ? 'active' : ''}`;
+                div.dataset.date = day.date;
+
+                if (day.rest) {
+                    div.innerHTML = `
+                        <div class="card">
+                            <h2 class="pink">❤️ พักผ่อน — กำลังกายพัก แต่ใจยังสู้ต่อ</h2>
+                            <p style="padding:10px 0;line-height:1.8;">
+                                กล้ามเนื้อซ่อมแซมตัวเองวันนี้<br>
+                                ยืดเหยียดเบาๆ · ดื่มน้ำเยอะๆ · นอนหลับให้สบาย 💤<br><br>
+                                <em style="color:#f472b6">"ศุภลักษณ์รอเห็นความสำเร็จของคุณอยู่นะ สู้ๆ นะ ❤️"</em>
+                            </p>
+                            <label class="check-item" data-id="${day.date}-rest">
+                                <input type="checkbox" disabled>
+                                <div class="check-content">
+                                    <div class="check-text">พักผ่อนครบถ้วน พร้อมลุยต่อ ✅</div>
+                                    <div class="check-meta"></div>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                } else {
+                    const legText = {
+                        rest: 'พักขา · ยกสูงตอนนอน · ประคบอุ่น',
+                        light: 'เดินเร็ว 10–15 นาที · ย่อเข่าเบาๆ ไม่ฝืน',
+                        full: 'ย่อเข่า 15×3 · กระโดดตบ 10–15 นาที'
+                    };
+                    const pullItems = Array.from({length: day.pull}, (_,i) => `
+                        <label class="check-item" data-id="${day.date}-pull-${i}">
+                            <input type="checkbox" disabled>
+                            <div class="check-content">
+                                <div class="check-text">รอบที่ ${i+1} — ${i==0?'ค้าง 5–10 วินาที → ลงช้าๆ ที่สุด':'ค้างเท่าที่ไหว → ลงช้าๆ เสมอ'}</div>
+                                <div class="check-meta"></div>
+                            </div>
+                        </label>`).join('');
+                    const pushItems = Array.from({length: day.push}, (_,i) => `
+                        <label class="check-item" data-id="${day.date}-push-${i}">
+                            <input type="checkbox" disabled>
+                            <div class="check-content">
+                                <div class="check-text">เซตที่ ${i+1} — ${i==0?'10–12 ครั้ง ลงช้าๆ':'8–10 ครั้ง หรือเท่าที่ไหว'}</div>
+                                <div class="check-meta"></div>
+                            </div>
+                        </label>`).join('');
+                    const backItems = Array.from({length: day.back}, (_,i) => `
+                        <label class="check-item" data-id="${day.date}-back-${i}">
+                            <input type="checkbox" disabled>
+                            <div class="check-content">
+                                <div class="check-text">เซตที่ ${i+1} — 12 ครั้ง ยกอก บีบหลัง ค้าง 2 วินาที ลงช้าๆ</div>
+                                <div class="check-meta"></div>
+                            </div>
+                        </label>`).join('');
+                    
+                    div.innerHTML = `
+                        <div class="card"><h2 class="yellow">🟡 ดึงข้อ</h2>${pullItems}</div>
+                        <div class="card"><h2 class="green">🟢 ดันพื้น</h2>${pushItems}</div>
+                        <div class="card"><h2 class="blue">🔵 ท่าหลัง</h2>${backItems}</div>
+                        <div class="card">
+                            <h2 class="red">🦵 ขา & หัวใจ</h2>
+                            <label class="check-item" data-id="${day.date}-legs">
+                                <input type="checkbox" disabled>
+                                <div class="check-content">
+                                    <div class="check-text">${legText[day.legs]}</div>
+                                    <div class="check-meta"></div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="card">
+                            <h2 class="orange">🍽️ กิน + พัก</h2>
+                            <label class="check-item" data-id="${day.date}-food1">
+                                <input type="checkbox" disabled>
+                                <div class="check-content">
+                                    <div class="check-text">กินโปรตีนพอ + ผัก · งดน้ำหวาน ขนมทอด</div>
+                                    <div class="check-meta"></div>
+                                </div>
+                            </label>
+                            <label class="check-item" data-id="${day.date}-food2">
+                                <input type="checkbox" disabled>
+                                <div class="check-content">
+                                    <div class="check-text">ดื่มน้ำ 2–3 ลิตร · นอน 7–8 ชม.</div>
+                                    <div class="check-meta"></div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="card" style="background: #2a1020; border-color: #be185d;">
+                            <h2 class="pink">💌 กำลังใจจาก ศุภลักษณ์</h2>
+                            <p style="padding: 8px 0; line-height: 1.8; color: #fbcfe8;">
+                                "ไม่ต้องรีบ ไม่ต้องแข่งกับใคร แค่ทำต่อเนื่องก็พอแล้ว<br>
+                                ฉันเห็นความพยายามของคุณ และภูมิใจในตัวคุณเสมอ ❤️"
+                            </p>
+                        </div>
+                    `;
+                }
+                contentsContainer.appendChild(div);
+            });
+
+            dataRef.on('value', (snapshot) => {
+                localData = snapshot.val() || {};
+                renderAllData();
+                document.getElementById('sync-indicator').textContent = '✅ อัปเดตล่าสุด';
+                setTimeout(() => {
+                    document.getElementById('sync-indicator').textContent = '✅ ซิงค์อยู่';
+                }, 2000);
+            });
+        }
+
+        function switchDay(date) {
+            activeDay = date;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.day-content').forEach(d => d.classList.remove('active'));
+            document.querySelector(`.day-content[data-date="${date}"]`).classList.add('active');
+        }
+
+        function renderAllData() {
+            document.querySelectorAll('.check-item').forEach(item => {
+                const id = item.dataset.id;
+                const rec = localData[id];
+                const cb = item.querySelector('input[type="checkbox"]');
+                const text = item.querySelector('.check-text');
+                const meta = item.querySelector('.check-meta');
+                
+                if (rec && rec.checked) {
+                    cb.checked = true;
+                    text.classList.add('done');
+                    meta.textContent = `✓ ${rec.who} — ${rec.when}`;
+                } else {
+                    cb.checked = false;
+                    text.classList.remove('done');
+                    meta.textContent = '';
+                }
+            });
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const allItems = document.querySelectorAll('.check-item');
+            let done = 0;
+            allItems.forEach(item => {
+                if (localData[item.dataset.id]?.checked) done++;
+            });
+            const total = allItems.length;
+            const pct = Math.round((done / total) * 100);
+            document.getElementById('progressFill').style.width = `${pct}%`;
+            document.getElementById('progressText').innerHTML = `<strong>${done}</strong> / ${total} เสร็จแล้ว — ${pct}% สู่ความฝัน ❤️`;
+        }
+
+        document.addEventListener('change', e => {
+            if (e.target.matches('input[type="checkbox"]') && editMode) {
+                const item = e.target.closest('.check-item');
+                const id = item.dataset.id;
+                const isChecked = e.target.checked;
+                const now = new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+                
+                if (isChecked) {
+                    localData[id] = { checked: true, who: currentUser.name, when: now };
+                } else {
+                    delete localData[id];
+                }
+                dataRef.set(localData);
+            }
+        });
+
+        checkAutoLogin();
+    </script>
+</body>
+</html>
